@@ -1,54 +1,62 @@
-// localStorage/materiale.js
+// LocalStorage/materiale.js
 
-const materiiPrime = [
-    {
-      id: 1,
-      denumire: "Malț Pale",
-      unitate: "kg",
-      cantitate: 100
-    },
-    {
-      id: 2,
-      denumire: "Malț Caramel",
-      unitate: "kg",
-      cantitate: 50
-    },
-    {
-      id: 3,
-      denumire: "Hamei Saaz",
-      unitate: "g",
-      cantitate: 2000
-    },
-    {
-      id: 4,
-      denumire: "Hamei Cascade",
-      unitate: "g",
-      cantitate: 1500
-    },
-    {
-      id: 5,
-      denumire: "Drojdie Ale",
-      unitate: "kg",
-      cantitate: 10
-    },
-    {
-      id: 6,
-      denumire: "Apa",
-      unitate: "L",
-      cantitate: 10000
-    },
-    {
-      id: 7,
-      denumire: "Zahăr pentru carbonatare",
-      unitate: "kg",
-      cantitate: 20
-    }
-  ];
+// Verificăm dacă există deja materiale în LocalStorage
+// Dacă nu, inițializăm cu câteva materiale implicite
+if (!localStorage.getItem("materiiPrime")) {
+    const materialeImplicite = [
+      {
+        id: 1,
+        denumire: "Malt Pale Ale",
+        cantitate: 300,
+        unitate: "kg"
+      },
+      {
+        id: 2,
+        denumire: "Malt",
+        cantitate: 300,
+        unitate: "kg"
+      },
+      {
+        id: 3,
+        denumire: "Drojdie Fermentis BE-256",
+        cantitate: 80,
+        unitate: "kg"
+      },
+      {
+        id: 4,
+        denumire: "Dropie Fermentis F-2",
+        cantitate: 50,
+        unitate: "kg"
+      },
+      {
+        id: 5,
+        denumire: "Hamei AMAREALA",
+        cantitate: 50,
+        unitate: "kg"
+      },
+      {
+        id: 6,
+        denumire: "Hamei AROMA",
+        cantitate: 30,
+        unitate: "kg"
+      },
+      {
+        id: 7,
+        denumire: "Irish moss",
+        cantitate: 20,
+        unitate: "pachete"
+      },
+   
+      {
+        id: 8,
+        denumire: "Zahăr brun",
+        cantitate: 25,
+        unitate: "kg"
+      }
+    ];
   
-  // Salvează doar dacă nu există deja în localStorage
-  if (!localStorage.getItem("materiiPrime")) {
-    localStorage.setItem("materiiPrime", JSON.stringify(materiiPrime));
+    localStorage.setItem("materiiPrime", JSON.stringify(materialeImplicite));
   }
   
-  export default materiiPrime;
+  export default {};
   
