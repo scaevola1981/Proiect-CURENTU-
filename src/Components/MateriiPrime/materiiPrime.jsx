@@ -13,7 +13,7 @@ const MateriiPrime = () => {
   const [editMode, setEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
+ 
   // Load materials from localStorage on component mount
   useEffect(() => {
     const loadMaterials = () => {
@@ -142,6 +142,7 @@ const MateriiPrime = () => {
   // Filter materials based on search term
   const filteredMaterials = materii.filter(material =>
     material.denumire.toLowerCase().includes(searchTerm.toLowerCase())
+    
   );
 
   if (isLoading) {
@@ -153,6 +154,7 @@ const MateriiPrime = () => {
         </div>
       </>
     );
+
   }
 
   return (
