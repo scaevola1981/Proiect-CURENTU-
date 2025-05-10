@@ -1,11 +1,12 @@
 const reteteInitiale = [
   {
     id: 1,
-    nume: "Bere ADAPTOR LA SITUATIE - CB 01",
+    nume: "ADAPTOR LA SITUATIE - CB 01",
     concentratieMust: "12 ±0.50°Plato",
     concentratieAlcool: "5 ±0.5% vol",
+    image:'/adaptor.png',
     durata: 0,
-    rezultat: { cantitate: 1200, unitate: "litri" },
+    rezultat: { cantitate: 1000, unitate: "litri" },
     ingrediente: [
       { denumire: "Malt Pale Ale", cantitate: 400, unitate: "Kg" },
       { denumire: "Zahar brun", cantitate: 20, unitate: "Kg" },
@@ -19,9 +20,10 @@ const reteteInitiale = [
   },
   {
     id: 2,
-    nume: "Bere INTRERUPATOR DE MUNCA - CB 02",
+    nume: " INTRERUPATOR DE MUNCA - CB 02",
     concentratieMust: "16 - 20,5 ±1°Plato",
     concentratieAlcool: "7 - 9,5 ±1 %vol",
+    image:'/intrerupator.png',
     durata: 7,
     rezultat: { cantitate: 1000, unitate: "litri" },
     ingrediente: [
@@ -35,9 +37,10 @@ const reteteInitiale = [
   },
   {
     id: 3,
-    nume: "Bere USB AMPER ALE - CB 03",
+    nume: "USB AMPER ALE - CB 03",
     concentratieMust: "13.8 ± 0.50°Plato",
     concentratieAlcool: "6 ± 0.50 %vol",
+    image:'/usb-amper-ale.png',
     durata: 0,
     rezultat: { cantitate: 1000, unitate: "litri" },
     ingrediente: [
