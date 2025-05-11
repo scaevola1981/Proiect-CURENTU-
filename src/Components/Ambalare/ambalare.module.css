@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .ambalare-container {
   padding: 20px;
   font-family: inherit; /* Use the inherited font-family for consistency */
@@ -97,3 +98,366 @@
   font-size: 1rem;
   color: var(--text-secondary-color, #555);
 }
+=======
+/* ambalare.module.css */
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  .title {
+    color: #3a3a3a;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2.2rem;
+    border-bottom: 3px solid #f8b73f;
+    padding-bottom: 0.75rem;
+    display: inline-block;
+  }
+  
+  .sectionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .section {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .section:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .section h2 {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #f8b73f;
+    padding-left: 0.75rem;
+  }
+  
+  .sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .sectionHeader h2 {
+    margin-bottom: 0;
+  }
+  
+  .emptyMessage {
+    text-align: center;
+    padding: 2rem;
+    color: #777;
+    font-style: italic;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+  }
+  
+  /* Containere grid */
+  .containereGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .containerCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+  }
+  
+  .containerCard:hover {
+    transform: translateY(-5px);
+    background-color: #f0f0f0;
+  }
+  
+  .containerSelectat {
+    border: 2px solid #f8b73f;
+    background-color: #fff8e6;
+  }
+  
+  .containerImage {
+    width: 80px;
+    height: auto;
+    margin-bottom: 1rem;
+  }
+  
+  .containerContent {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .containerContent h4 {
+    margin: 0 0 0.5rem;
+    color: #333;
+    font-size: 1.2rem;
+  }
+  
+  .containerContent p {
+    margin: 0.25rem 0;
+    color: #555;
+  }
+  
+  /* Formulare */
+  .formGroup {
+    margin-bottom: 1.25rem;
+  }
+  
+  .formGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #444;
+  }
+  
+  .radioGroup, .checkboxGroup {
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .radioGroup label, .checkboxGroup label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  
+  .select {
+    width: 100%;
+    max-width: 200px;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 1rem;
+  }
+  
+  /* Necesar container */
+  .necesarContainer {
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    border-left: 4px solid #4a90e2;
+  }
+  
+  .necesarContainer h3 {
+    color: #2c5282;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .necesarContainer p {
+    margin: 0.5rem 0;
+    color: #444;
+  }
+  
+  .stocInsuficient {
+    background-color: #fff5f5;
+    border-left-color: #e53e3e;
+  }
+  
+  .avertisment {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #fef2f2;
+    border-radius: 6px;
+    border-left: 3px solid #e53e3e;
+  }
+  
+  .avertisment p {
+    margin: 0;
+    color: #e53e3e;
+    font-weight: 500;
+  }
+  
+  /* Butoane */
+  .button {
+    background-color: #f8b73f;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+    margin-top: 1rem;
+    text-align: center;
+  }
+  
+  .button:hover {
+    background-color: #e6a32e;
+    transform: translateY(-2px);
+  }
+  
+  .smallButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    margin-top: 0;
+  }
+  
+  /* Stoc grid */
+  .stockGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.25rem;
+  }
+  
+  .stockCard {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .stockCard h4 {
+    margin: 0 0 1rem;
+    color: #333;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #f8b73f;
+    padding-bottom: 0.5rem;
+  }
+  
+  .stockCard p {
+    margin: 0.5rem 0;
+    color: #555;
+  }
+  
+  /* Formular adăugare stoc */
+  .addStockForm {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-top: 3px solid #f8b73f;
+  }
+  
+  .addStockForm h3 {
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    color: #333;
+    font-size: 1.3rem;
+  }
+  
+  .stockFormGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .stockFormColumn h4 {
+    margin: 0 0 1rem;
+    color: #333;
+    font-size: 1.1rem;
+  }
+  
+  .stockFormItem {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .stockFormItem label {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  
+  .smallInput {
+    width: 80px;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  /* Jurnal ambalare */
+  .jurnalContainer {
+    overflow-x: auto;
+  }
+  
+  .jurnalTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  
+  .jurnalTable th, .jurnalTable td {
+    padding: 0.875rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .jurnalTable th {
+    background-color: #f8f8f8;
+    color: #333;
+    font-weight: 600;
+  }
+  
+  .jurnalTable tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .stockGrid, .stockFormGrid {
+      grid-template-columns: 1fr;
+    }
+    
+    .radioGroup, .checkboxGroup {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .jurnalTable {
+      font-size: 0.85rem;
+    }
+    
+    .jurnalTable th, .jurnalTable td {
+      padding: 0.75rem 0.5rem;
+    }
+    
+    .containerCard {
+      padding: 1rem;
+    }
+    
+    .section {
+      padding: 1.25rem;
+    }
+  }
+  
+  /* Animații */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .section {
+    animation: fadeIn 0.4s ease-out;
+  }
+  
+  /* Stiluri pentru imagini */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+>>>>>>> 3d6693fb2299881dc562c61294911bed8ab18cb9
