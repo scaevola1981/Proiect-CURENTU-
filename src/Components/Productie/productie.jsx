@@ -311,48 +311,93 @@ const Productie = () => {
   };
 
   const golireContainer = (containerId) => {
-    const confirmGolire = window.confirm(`Sigur doriți să goliți Containerul ${containerId}?`);
-    if (!confirmGolire) return;
-
     const productieData = localStorage.getItem(`productieContainer_${containerId}`);
     if (!productieData) {
       alert('Nu există date de producție pentru acest container.');
       return;
     }
-
+  
+    const productie = JSON.parse(productieData);
+    const cantitateRamasa = parseFloat(productie.cantitate);
+    
+    const cantitateDeGolit = prompt(
+      `Introduceți cantitatea de golit (litri)\nCantitate disponibilă: ${cantitateRamasa} litri`,
+      cantitateRamasa
+    );
+  
+    if (!cantitateDeGolit || isNaN(cantitateDeGolit) || parseFloat(cantitateDeGolit) <= 0) {
+      return;
+    }
+  
+    const cantitateDeGolitNum = parseFloat(cantitateDeGolit);
+    
+    if (cantitateDeGolitNum > cantitateRamasa) {
+      alert(`Nu puteți goli mai mult decât există în container! Cantitate disponibilă: ${cantitateRamasa} litri`);
+      return;
+    }
+  
     const isMistake = window.confirm(
       'A fost o greșeală în această producție?\n' +
       'Apăsați "OK" dacă doriți să anulați producția și să returnați materialele în stoc.\n' +
       'Apăsați "Cancel" dacă fermentatorul a fost golit fizic și materialele nu trebuie returnate.'
     );
-
+  
+    // Calculăm factorul de proporționalitate pentru returnarea materialelor
+    const factorReturnare = cantitateDeGolitNum / cantitateRamasa;
+  
     if (isMistake) {
-      const productie = JSON.parse(productieData);
-      const materialeConsumate = productie.materiale;
+      // Returnăm materialele proporțional cu cantitatea golită
+      const materialeConsumate = productie.materiale.map(material => ({
+        ...material,
+        cantitate: parseFloat((material.cantitate * factorReturnare).toFixed(2))
+      }));
+      
       adaugaInStoc(materialeConsumate);
-      localStorage.removeItem(`productieContainer_${containerId}`);
-
-      const containereActualizate = containere.map((cont) => {
-        if (cont.id === containerId) {
-          return { ...cont, status: 'disponibil', retetaNume: '', cantitate: '' };
-        }
-        return cont;
-      });
-      setContainere(containereActualizate);
-
-      alert(`Containerul ${containerId} a fost golit, iar materialele au fost returnate în stoc. Containerul este acum disponibil.`);
+    }
+  
+    // Actualizăm sau ștergem containerul
+    if (cantitateDeGolitNum < cantitateRamasa) {
+      // Actualizăm cantitatea rămasă în container
+      const cantitateNoua = cantitateRamasa - cantitateDeGolitNum;
+      
+      const productieActualizata = {
+        ...productie,
+        cantitate: cantitateNoua,
+        materiale: productie.materiale.map(material => ({
+          ...material,
+          cantitate: parseFloat((material.cantitate * (1 - factorReturnare)).toFixed(2))
+        }))
+      };
+      
+      localStorage.setItem(
+        `productieContainer_${containerId}`,
+        JSON.stringify(productieActualizata)
+      );
+      
+      // Actualizăm starea UI
+      setContainere(prevContainere => 
+        prevContainere.map(cont => 
+          cont.id === containerId 
+            ? { ...cont, cantitate: cantitateNoua }
+            : cont
+        )
+      );
+      
+      alert(`Au fost goliți ${cantitateDeGolitNum} litri din Containerul ${containerId}. Au rămas ${cantitateNoua} litri.`);
     } else {
+      // Ștergem complet containerul
       localStorage.removeItem(`productieContainer_${containerId}`);
-
-      const containereActualizate = containere.map((cont) => {
-        if (cont.id === containerId) {
-          return { ...cont, status: 'disponibil', retetaNume: '', cantitate: '' };
-        }
-        return cont;
-      });
-      setContainere(containereActualizate);
-
-      alert(`Containerul ${containerId} a fost golit și este acum disponibil. Materialele utilizate nu au fost returnate în stoc.`);
+      
+      // Actualizăm starea UI
+      setContainere(prevContainere => 
+        prevContainere.map(cont => 
+          cont.id === containerId 
+            ? { ...cont, status: 'disponibil', retetaNume: '', cantitate: '' }
+            : cont
+        )
+      );
+      
+      alert(`Containerul ${containerId} a fost golit complet și este acum disponibil.`);
     }
   };
 
