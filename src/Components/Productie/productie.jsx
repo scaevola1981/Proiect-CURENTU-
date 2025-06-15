@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Header from '../Header/header';
 import styles from './productie.module.css';
 import reteteInitiale from '../../LocalStorage/reteteInitiale';
@@ -8,14 +8,17 @@ const Productie = () => {
   const [selectedReteta, setSelectedReteta] = useState(null);
   const [cantitateProdusa, setCantitateProdusa] = useState('');
   const [consumMateriale, setConsumMateriale] = useState([]);
+  const [consumAmbalaje, setConsumAmbalaje] = useState([]);
   const [container, setContainer] = useState('');
   const [stocMateriale, setStocMateriale] = useState([]);
+  const [stocAmbalaje, setStocAmbalaje] = useState([]);
   const [materialeInsuficiente, setMaterialeInsuficiente] = useState([]);
+  const [ambalajeInsuficiente, setAmbalajeInsuficiente] = useState([]);
   const [showWarning, setShowWarning] = useState(false);
   const [showMaterials, setShowMaterials] = useState(false);
   const [containere, setContainere] = useState([]);
 
-  // Inițializare containere și verificare status cu detalii rețetă
+  // Inițializare containere și stoc ambalaje
   useEffect(() => {
     const containereInitiale = [
       { id: 1, capacitate: 1000, status: 'disponibil' },
@@ -27,9 +30,7 @@ const Productie = () => {
     ];
 
     const containereActualizate = containereInitiale.map((cont) => {
-      const productieContainer = localStorage.getItem(
-        `productieContainer_${cont.id}`
-      );
+      const productieContainer = localStorage.getItem(`productieContainer_${cont.id}`);
       if (productieContainer) {
         const productie = JSON.parse(productieContainer);
         return {
@@ -43,6 +44,22 @@ const Productie = () => {
     });
 
     setContainere(containereActualizate);
+
+    // Inițializare stoc ambalaje
+    const ambalajeInitiale = [
+      { id: 1, tip: 'Sticlă 0.5L', cantitate: 1000, unitate: 'buc' },
+      { id: 2, tip: 'KEG 50L', cantitate: 50, unitate: 'buc' },
+      { id: 3, tip: 'Etichetă', cantitate: 2000, unitate: 'buc' },
+      { id: 4, tip: 'Capac', cantitate: 1500, unitate: 'buc' },
+    ];
+
+    const ambalajeSalvate = localStorage.getItem('stocAmbalaje');
+    if (!ambalajeSalvate) {
+      localStorage.setItem('stocAmbalaje', JSON.stringify(ambalajeInitiale));
+      setStocAmbalaje(ambalajeInitiale);
+    } else {
+      setStocAmbalaje(JSON.parse(ambalajeSalvate));
+    }
   }, []);
 
   // Salvare automată a stării curente
@@ -51,8 +68,10 @@ const Productie = () => {
       selectedReteta,
       cantitateProdusa,
       consumMateriale,
+      consumAmbalaje,
       container,
       materialeInsuficiente,
+      ambalajeInsuficiente,
       showWarning,
       showMaterials,
       timestamp: Date.now(),
@@ -62,8 +81,10 @@ const Productie = () => {
     selectedReteta,
     cantitateProdusa,
     consumMateriale,
+    consumAmbalaje,
     container,
     materialeInsuficiente,
+    ambalajeInsuficiente,
     showWarning,
     showMaterials,
   ]);
@@ -77,8 +98,10 @@ const Productie = () => {
         setSelectedReteta(parsed.selectedReteta);
         setCantitateProdusa(parsed.cantitateProdusa);
         setConsumMateriale(parsed.consumMateriale);
+        setConsumAmbalaje(parsed.consumAmbalaje || []);
         setContainer(parsed.container);
         setMaterialeInsuficiente(parsed.materialeInsuficiente);
+        setAmbalajeInsuficiente(parsed.ambalajeInsuficiente || []);
         setShowWarning(parsed.showWarning);
         setShowMaterials(parsed.showMaterials);
       } else {
@@ -93,41 +116,22 @@ const Productie = () => {
     setStocMateriale(materiiPrime ? JSON.parse(materiiPrime) : []);
   }, []);
 
-  const clearTempState = () => {
+  const clearTempState = useCallback(() => {
     if (window.confirm('Sigur doriți să ștergeți datele temporare?')) {
       localStorage.removeItem('productieTemp');
       setSelectedReteta(null);
       setCantitateProdusa('');
       setConsumMateriale([]);
+      setConsumAmbalaje([]);
       setContainer('');
       setMaterialeInsuficiente([]);
+      setAmbalajeInsuficiente([]);
       setShowWarning(false);
       setShowMaterials(false);
     }
-  };
+  }, []);
 
-  const calculeazaConsum = () => {
-    if (
-      !selectedReteta ||
-      !cantitateProdusa ||
-      parseFloat(cantitateProdusa) <= 0
-    )
-      return;
-
-    const factorScalare =
-      parseFloat(cantitateProdusa) / selectedReteta.rezultat.cantitate;
-    const materialeConsumate = selectedReteta.ingrediente.map((ingredient) => ({
-      denumire: ingredient.denumire,
-      cantitate: parseFloat((ingredient.cantitate * factorScalare).toFixed(2)),
-      unitate: ingredient.unitate,
-    }));
-
-    setConsumMateriale(materialeConsumate);
-    setShowMaterials(true);
-    verificaStoc(materialeConsumate);
-  };
-
-  const gasesteMaterialInStoc = (denumireMaterial, unitateMaterial) => {
+  const gasesteMaterialInStoc = useCallback((denumireMaterial, unitateMaterial) => {
     const unitateCautata = unitateMaterial.toLowerCase().trim();
     const denumireCautata = denumireMaterial
       .toLowerCase()
@@ -151,10 +155,14 @@ const Productie = () => {
     }
 
     return null;
-  };
+  }, [stocMateriale]);
 
-  const verificaStoc = (materialeNecesare) => {
-    const INSUFICIENTE = [];
+  const gasesteAmbalajInStoc = useCallback((tipAmbalaj) => {
+    return stocAmbalaje.find((ambalaj) => ambalaj.tip === tipAmbalaj);
+  }, [stocAmbalaje]);
+
+  const verificaStoc = useCallback((materialeNecesare) => {
+    const insuficiente = [];
 
     materialeNecesare.forEach((material) => {
       const materialInStoc = gasesteMaterialInStoc(
@@ -163,13 +171,13 @@ const Productie = () => {
       );
 
       if (!materialInStoc) {
-        INSUFICIENTE.push({
+        insuficiente.push({
           ...material,
           inStoc: 0,
           lipseste: material.cantitate,
         });
       } else if (materialInStoc.cantitate < material.cantitate) {
-        INSUFICIENTE.push({
+        insuficiente.push({
           ...material,
           inStoc: materialInStoc.cantitate,
           lipseste: parseFloat(
@@ -179,11 +187,74 @@ const Productie = () => {
       }
     });
 
-    setMaterialeInsuficiente(INSUFICIENTE);
-    setShowWarning(INSUFICIENTE.length > 0);
-  };
+    setMaterialeInsuficiente(insuficiente);
+    setShowWarning(insuficiente.length > 0 || ambalajeInsuficiente.length > 0);
+  }, [ambalajeInsuficiente, gasesteMaterialInStoc]);
 
-  const scadeDinStoc = (materialeConsumate) => {
+  const verificaStocAmbalaje = useCallback((ambalajeNecesare) => {
+    const insuficiente = [];
+
+    ambalajeNecesare.forEach((ambalaj) => {
+      const ambalajInStoc = gasesteAmbalajInStoc(ambalaj.tip);
+
+      if (!ambalajInStoc) {
+        insuficiente.push({
+          ...ambalaj,
+          inStoc: 0,
+          lipseste: ambalaj.cantitate,
+        });
+      } else if (ambalajInStoc.cantitate < ambalaj.cantitate) {
+        insuficiente.push({
+          ...ambalaj,
+          inStoc: ambalajInStoc.cantitate,
+          lipseste: ambalaj.cantitate - ambalajInStoc.cantitate,
+        });
+      }
+    });
+
+    setAmbalajeInsuficiente(insuficiente);
+    setShowWarning(materialeInsuficiente.length > 0 || insuficiente.length > 0);
+  }, [materialeInsuficiente, gasesteAmbalajInStoc]);
+
+  const calculeazaConsum = useCallback(() => {
+    if (!selectedReteta || !cantitateProdusa || parseFloat(cantitateProdusa) <= 0) return;
+
+    // Calcul consum materiale
+    const factorScalare = parseFloat(cantitateProdusa) / selectedReteta.rezultat.cantitate;
+    const materialeConsumate = selectedReteta.ingrediente.map((ingredient) => ({
+      denumire: ingredient.denumire,
+      cantitate: parseFloat((ingredient.cantitate * factorScalare).toFixed(2)),
+      unitate: ingredient.unitate,
+    }));
+
+    setConsumMateriale(materialeConsumate);
+    verificaStoc(materialeConsumate);
+
+    // Calcul consum ambalaje
+    const cantitateLitri = parseFloat(cantitateProdusa);
+    const sticleNecesare = Math.ceil(cantitateLitri / 0.5); // Presupunem sticle de 0.5L
+    const kegNecesare = Math.floor(cantitateLitri / 50); // Presupunem KEG de 50L
+    const ambalajeNecesare = [
+      { tip: 'Sticlă 0.5L', cantitate: sticleNecesare, unitate: 'buc' },
+      { tip: 'KEG 50L', cantitate: kegNecesare, unitate: 'buc' },
+      { tip: 'Etichetă', cantitate: sticleNecesare, unitate: 'buc' },
+      { tip: 'Capac', cantitate: sticleNecesare, unitate: 'buc' },
+    ];
+
+    setConsumAmbalaje(ambalajeNecesare);
+    verificaStocAmbalaje(ambalajeNecesare);
+
+    setShowMaterials(true);
+  }, [selectedReteta, cantitateProdusa, verificaStoc, verificaStocAmbalaje]);
+
+  // Apel automat pentru recalculare când se schimbă containerul sau cantitatea
+  useEffect(() => {
+    if (container && cantitateProdusa && selectedReteta) {
+      calculeazaConsum();
+    }
+  }, [container, cantitateProdusa, selectedReteta, calculeazaConsum]);
+
+  const scadeDinStoc = useCallback((materialeConsumate) => {
     const stoc = JSON.parse(localStorage.getItem('materiiPrime')) || [];
     const stocActualizat = [...stoc];
 
@@ -208,9 +279,33 @@ const Productie = () => {
     localStorage.setItem('materiiPrime', JSON.stringify(stocActualizat));
     setStocMateriale(stocActualizat);
     return stocActualizat;
-  };
+  }, [gasesteMaterialInStoc]);
 
-  const adaugaInStoc = (materialeConsumate) => {
+  const scadeDinStocAmbalaje = useCallback((ambalajeConsumate) => {
+    const stoc = JSON.parse(localStorage.getItem('stocAmbalaje')) || [];
+    const stocActualizat = [...stoc];
+
+    ambalajeConsumate.forEach((ambalaj) => {
+      const ambalajInStoc = gasesteAmbalajInStoc(ambalaj.tip);
+
+      if (ambalajInStoc) {
+        const indexInStoc = stocActualizat.findIndex(
+          (item) => item.id === ambalajInStoc.id
+        );
+        if (indexInStoc !== -1) {
+          const cantitateRamasa =
+            stocActualizat[indexInStoc].cantitate - ambalaj.cantitate;
+          stocActualizat[indexInStoc].cantitate = Math.max(0, cantitateRamasa);
+        }
+      }
+    });
+
+    localStorage.setItem('stocAmbalaje', JSON.stringify(stocActualizat));
+    setStocAmbalaje(stocActualizat);
+    return stocActualizat;
+  }, [gasesteAmbalajInStoc]);
+
+  const adaugaInStoc = useCallback((materialeConsumate) => {
     const stoc = JSON.parse(localStorage.getItem('materiiPrime')) || [];
     const stocActualizat = [...stoc];
 
@@ -228,7 +323,7 @@ const Productie = () => {
           stocActualizat[indexInStoc].cantitate += materialConsumat.cantitate;
         }
       } else {
-        const newId = stocActualizat.length > 0 ? Math.max(...stocActualizat.map(m => m.id)) + 1 : 1;
+        const newId = stocActualizat.length > 0 ? Math.max(...stocActualizat.map((m) => m.id)) + 1 : 1;
         stocActualizat.push({
           id: newId,
           denumire: materialConsumat.denumire.trim(),
@@ -241,9 +336,39 @@ const Productie = () => {
     localStorage.setItem('materiiPrime', JSON.stringify(stocActualizat));
     setStocMateriale(stocActualizat);
     return stocActualizat;
-  };
+  }, [gasesteMaterialInStoc]);
 
-  const confirmaProductia = () => {
+  const adaugaInStocAmbalaje = useCallback((ambalajeConsumate) => {
+    const stoc = JSON.parse(localStorage.getItem('stocAmbalaje')) || [];
+    const stocActualizat = [...stoc];
+
+    ambalajeConsumate.forEach((ambalaj) => {
+      const ambalajInStoc = gasesteAmbalajInStoc(ambalaj.tip);
+
+      if (ambalajInStoc) {
+        const indexInStoc = stocActualizat.findIndex(
+          (item) => item.id === ambalajInStoc.id
+        );
+        if (indexInStoc !== -1) {
+          stocActualizat[indexInStoc].cantitate += ambalaj.cantitate;
+        }
+      } else {
+        const newId = stocActualizat.length > 0 ? Math.max(...stocActualizat.map((a) => a.id)) + 1 : 1;
+        stocActualizat.push({
+          id: newId,
+          tip: ambalaj.tip.trim(),
+          cantitate: ambalaj.cantitate,
+          unitate: ambalaj.unitate.trim(),
+        });
+      }
+    });
+
+    localStorage.setItem('stocAmbalaje', JSON.stringify(stocActualizat));
+    setStocAmbalaje(stocActualizat);
+    return stocActualizat;
+  }, [gasesteAmbalajInStoc]);
+
+  const confirmaProductia = useCallback(() => {
     localStorage.removeItem('productieTemp');
 
     if (!selectedReteta || !cantitateProdusa || !container) {
@@ -251,24 +376,35 @@ const Productie = () => {
       return;
     }
 
-    if (materialeInsuficiente.length > 0) {
+    if (materialeInsuficiente.length > 0 || ambalajeInsuficiente.length > 0) {
       const confirmare = window.confirm(
-        'Nu aveți suficiente materiale în stoc pentru această producție! Doriți să continuați oricum? ' +
-          '(Stocul va ajunge la 0 pentru materialele insuficiente)'
+        'Nu aveți suficiente materiale sau ambalaje în stoc pentru această producție! Doriți să continuați oricum? ' +
+          '(Stocul va ajunge la 0 pentru materialele/ambalajele insuficiente)'
       );
       if (!confirmare) return;
     }
 
-    const factorScalare =
-      parseFloat(cantitateProdusa) / selectedReteta.rezultat.cantitate;
+    const factorScalare = parseFloat(cantitateProdusa) / selectedReteta.rezultat.cantitate;
     const materialeConsumate = selectedReteta.ingrediente.map((ingredient) => ({
       denumire: ingredient.denumire,
       cantitate: parseFloat((ingredient.cantitate * factorScalare).toFixed(2)),
       unitate: ingredient.unitate,
     }));
 
+    const cantitateLitri = parseFloat(cantitateProdusa);
+    const sticleNecesare = Math.ceil(cantitateLitri / 0.5);
+    const kegNecesare = Math.floor(cantitateLitri / 50);
+    const ambalajeConsumate = [
+      { tip: 'Sticlă 0.5L', cantitate: sticleNecesare, unitate: 'buc' },
+      { tip: 'KEG 50L', cantitate: kegNecesare, unitate: 'buc' },
+      { tip: 'Etichetă', cantitate: sticleNecesare, unitate: 'buc' },
+      { tip: 'Capac', cantitate: sticleNecesare, unitate: 'buc' },
+    ];
+
     setConsumMateriale(materialeConsumate);
+    setConsumAmbalaje(ambalajeConsumate);
     scadeDinStoc(materialeConsumate);
+    scadeDinStocAmbalaje(ambalajeConsumate);
 
     const productie = {
       retetaId: selectedReteta.id,
@@ -276,13 +412,11 @@ const Productie = () => {
       cantitate: cantitateProdusa,
       container,
       materiale: materialeConsumate,
+      ambalaje: ambalajeConsumate,
       data: new Date().toISOString(),
     };
 
-    localStorage.setItem(
-      `productieContainer_${container}`,
-      JSON.stringify(productie)
-    );
+    localStorage.setItem(`productieContainer_${container}`, JSON.stringify(productie));
 
     const containereActualizate = containere.map((cont) => {
       if (cont.id.toString() === container) {
@@ -295,126 +429,134 @@ const Productie = () => {
       }
       return cont;
     });
+
     setContainere(containereActualizate);
 
     alert(
-      `Producție înregistrată în Containerul ${container}! Materialele au fost scăzute din stoc.`
+      `Producție înregistrată în Containerul ${container}! Materialele și ambalajele au fost scăzute din stoc.`
     );
 
     setSelectedReteta(null);
     setCantitateProdusa('');
     setConsumMateriale([]);
+    setConsumAmbalaje([]);
     setContainer('');
     setMaterialeInsuficiente([]);
+    setAmbalajeInsuficiente([]);
     setShowWarning(false);
     setShowMaterials(false);
-  };
+  }, [
+    selectedReteta,
+    cantitateProdusa,
+    container,
+    materialeInsuficiente,
+    ambalajeInsuficiente,
+    scadeDinStoc,
+    scadeDinStocAmbalaje,
+    containere,
+  ]);
 
-  const golireContainer = (containerId) => {
+  const golireContainer = useCallback((containerId) => {
     const productieData = localStorage.getItem(`productieContainer_${containerId}`);
     if (!productieData) {
       alert('Nu există date de producție pentru acest container.');
       return;
     }
-  
+
     const productie = JSON.parse(productieData);
     const cantitateRamasa = parseFloat(productie.cantitate);
-    
+
     const cantitateDeGolit = prompt(
       `Introduceți cantitatea de golit (litri)\nCantitate disponibilă: ${cantitateRamasa} litri`,
       cantitateRamasa
     );
-  
+
     if (!cantitateDeGolit || isNaN(cantitateDeGolit) || parseFloat(cantitateDeGolit) <= 0) {
       return;
     }
-  
+
     const cantitateDeGolitNum = parseFloat(cantitateDeGolit);
-    
+
     if (cantitateDeGolitNum > cantitateRamasa) {
       alert(`Nu puteți goli mai mult decât există în container! Cantitate disponibilă: ${cantitateRamasa} litri`);
       return;
     }
-  
+
     const isMistake = window.confirm(
       'A fost o greșeală în această producție?\n' +
-      'Apăsați "OK" dacă doriți să anulați producția și să returnați materialele în stoc.\n' +
-      'Apăsați "Cancel" dacă fermentatorul a fost golit fizic și materialele nu trebuie returnate.'
+        'Apăsați "OK" dacă doriți să anulați producția și să returnați materialele și ambalajele în stoc.\n' +
+        'Apăsați "Cancel" dacă fermentatorul a fost golit fizic și materialele/ambalajele nu trebuie returnate.'
     );
-  
-    // Calculăm factorul de proporționalitate pentru returnarea materialelor
+
     const factorReturnare = cantitateDeGolitNum / cantitateRamasa;
-  
+
     if (isMistake) {
-      // Returnăm materialele proporțional cu cantitatea golită
-      const materialeConsumate = productie.materiale.map(material => ({
+      const materialeConsumate = productie.materiale.map((material) => ({
         ...material,
-        cantitate: parseFloat((material.cantitate * factorReturnare).toFixed(2))
+        cantitate: parseFloat((material.cantitate * factorReturnare).toFixed(2)),
       }));
-      
       adaugaInStoc(materialeConsumate);
+
+      const ambalajeConsumate = productie.ambalaje.map((ambalaj) => ({
+        ...ambalaj,
+        cantitate: Math.ceil(ambalaj.cantitate * factorReturnare),
+      }));
+      adaugaInStocAmbalaje(ambalajeConsumate);
     }
-  
-    // Actualizăm sau ștergem containerul
+
     if (cantitateDeGolitNum < cantitateRamasa) {
-      // Actualizăm cantitatea rămasă în container
       const cantitateNoua = cantitateRamasa - cantitateDeGolitNum;
-      
+
       const productieActualizata = {
         ...productie,
         cantitate: cantitateNoua,
-        materiale: productie.materiale.map(material => ({
+        materiale: productie.materiale.map((material) => ({
           ...material,
-          cantitate: parseFloat((material.cantitate * (1 - factorReturnare)).toFixed(2))
-        }))
+          cantitate: parseFloat((material.cantitate * (1 - factorReturnare)).toFixed(2)),
+        })),
+        ambalaje: productie.ambalaje.map((ambalaj) => ({
+          ...ambalaj,
+          cantitate: Math.ceil(ambalaj.cantitate * (1 - factorReturnare)),
+        })),
       };
-      
-      localStorage.setItem(
-        `productieContainer_${containerId}`,
-        JSON.stringify(productieActualizata)
-      );
-      
-      // Actualizăm starea UI
-      setContainere(prevContainere => 
-        prevContainere.map(cont => 
-          cont.id === containerId 
-            ? { ...cont, cantitate: cantitateNoua }
-            : cont
+
+      localStorage.setItem(`productieContainer_${containerId}`, JSON.stringify(productieActualizata));
+
+      setContainere((prevContainere) =>
+        prevContainere.map((cont) =>
+          cont.id === containerId ? { ...cont, cantitate: cantitateNoua } : cont
         )
       );
-      
+
       alert(`Au fost goliți ${cantitateDeGolitNum} litri din Containerul ${containerId}. Au rămas ${cantitateNoua} litri.`);
     } else {
-      // Ștergem complet containerul
       localStorage.removeItem(`productieContainer_${containerId}`);
-      
-      // Actualizăm starea UI
-      setContainere(prevContainere => 
-        prevContainere.map(cont => 
-          cont.id === containerId 
+
+      setContainere((prevContainere) =>
+        prevContainere.map((cont) =>
+          cont.id === containerId
             ? { ...cont, status: 'disponibil', retetaNume: '', cantitate: '' }
             : cont
         )
       );
-      
+
       alert(`Containerul ${containerId} a fost golit complet și este acum disponibil.`);
     }
-  };
+  }, [adaugaInStoc, adaugaInStocAmbalaje]);
 
-  const afiseazaInfoContainer = (containerId) => {
-    const productieData = localStorage.getItem(
-      `productieContainer_${containerId}`
-    );
+  const afiseazaInfoContainer = useCallback((containerId) => {
+    const productieData = localStorage.getItem(`productieContainer_${containerId}`);
     if (productieData) {
       const productie = JSON.parse(productieData);
       alert(
         `Container ${containerId}\n` +
           `Rețetă: ${productie.numeReteta}\n` +
           `Cantitate: ${productie.cantitate}\n` +
-          `Data: ${new Date(productie.data).toLocaleDateString()}`
+          `Data: ${new Date(productie.data).toLocaleDateString()}\n` +
+          `Ambalaje: \n${productie.ambalaje.map((a) => `${a.tip}: ${a.cantitate} ${a.unitate}`).join('\n')}`
       );
     }
-  };
+  }, []);
 
   return (
     <>
@@ -429,13 +571,15 @@ const Productie = () => {
                 selectedReteta?.id === reteta.id ? styles.selectedReteta : ''
               }`}
               style={{
-                backgroundImage: `url(/imagini${reteta.image})`,
+                backgroundImage: `url(/imagini/${reteta.image})`,
               }}
               onClick={() => {
                 setSelectedReteta(reteta);
                 setConsumMateriale([]);
+                setConsumAmbalaje([]);
                 setCantitateProdusa('');
                 setMaterialeInsuficiente([]);
+                setAmbalajeInsuficiente([]);
                 setShowWarning(false);
                 setShowMaterials(false);
               }}
@@ -444,8 +588,7 @@ const Productie = () => {
               <p>Concentrație must: {reteta.concentratieMust}</p>
               <p>Concentrație alcool: {reteta.concentratieAlcool}</p>
               <p>
-                Producție standard: {reteta.rezultat.cantitate}{' '}
-                {reteta.rezultat.unitate}
+                Producție standard: {reteta.rezultat.cantitate} {reteta.rezultat.unitate}
               </p>
             </div>
           ))}
@@ -456,17 +599,9 @@ const Productie = () => {
             {containere.map((cont) => (
               <div
                 key={cont.id}
-                className={`${styles.containerCard} 
-                  ${
-                    cont.status !== 'disponibil'
-                      ? styles.containerIndisponibil
-                      : ''
-                  } 
-                  ${
-                    container === cont.id.toString()
-                      ? styles.containerSelectat
-                      : ''
-                  }`}
+                className={`${styles.containerCard} ${
+                  cont.status !== 'disponibil' ? styles.containerIndisponibil : ''
+                } ${container === cont.id.toString() ? styles.containerSelectat : ''}`}
                 onClick={() => {
                   if (cont.status === 'disponibil') {
                     setContainer(cont.id.toString());
@@ -509,11 +644,9 @@ const Productie = () => {
         </div>
 
         {selectedReteta && (
-          <>
+          <div>
             <div className={styles.formGroup}>
-              <label>
-                Cantitate de produs (litri):
-              </label>
+              <label>Cantitate de produs (litri):</label>
               <input
                 type="number"
                 step="0.1"
@@ -525,25 +658,12 @@ const Productie = () => {
               />
             </div>
 
-            <button
-              onClick={calculeazaConsum}
-              className={styles.button}
-              disabled={!cantitateProdusa || parseFloat(cantitateProdusa) <= 0}
-              style={{ marginTop: '10px' }}
-            >
-              Calculează Consum
-            </button>
-
             {showMaterials && (
-              <>
+              <div>
                 {showWarning && materialeInsuficiente.length > 0 && (
                   <div className={styles.warningContainer}>
-                    <h3 className={styles.warningTitle}>
-                      Atenție! Materiale insuficiente:
-                    </h3>
-                    <table
-                      className={`${styles.consumTable} ${styles.warningTable}`}
-                    >
+                    <h3 className={styles.warningTitle}>Atenție! Materiale insuficiente:</h3>
+                    <table className={styles.consumTable}>
                       <thead>
                         <tr>
                           <th>Material</th>
@@ -555,16 +675,40 @@ const Productie = () => {
                       </thead>
                       <tbody>
                         {materialeInsuficiente.map((material, index) => (
-                          <tr key={index} className={styles.warningRow}>
+                          <tr key={index}>
                             <td>{material.denumire}</td>
-                            <td className={styles.quantity}>
-                              {material.cantitate}
-                            </td>
+                            <td>{material.cantitate}</td>
                             <td>{material.inStoc}</td>
-                            <td className={styles.missingQuantity}>
-                              {material.lipseste}
-                            </td>
+                            <td>{material.lipseste}</td>
                             <td>{material.unitate}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {showWarning && ambalajeInsuficiente.length > 0 && (
+                  <div className={styles.warningContainer}>
+                    <h3 className={styles.warningTitle}>Atenție! Ambalaje insuficiente:</h3>
+                    <table className={styles.consumTable}>
+                      <thead>
+                        <tr>
+                          <th>Tip</th>
+                          <th>Necesar</th>
+                          <th>În stoc</th>
+                          <th>Lipsă</th>
+                          <th>Unitate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ambalajeInsuficiente.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.tip}</td>
+                            <td>{item.cantitate}</td>
+                            <td>{item.inStoc}</td>
+                            <td>{item.lipseste}</td>
+                            <td>{item.unitate}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -586,10 +730,30 @@ const Productie = () => {
                       {consumMateriale.map((material, index) => (
                         <tr key={index}>
                           <td>{material.denumire}</td>
-                          <td className={styles.quantity}>
-                            {material.cantitate}
-                          </td>
+                          <td>{material.cantitate}</td>
                           <td>{material.unitate}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className={styles.consumContainer}>
+                  <h3>Ambalaje necesare:</h3>
+                  <table className={styles.consumTable}>
+                    <thead>
+                      <tr>
+                        <th>Tip</th>
+                        <th>Cantitate</th>
+                        <th>Unitate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {consumAmbalaje.map((ambalaj, index) => (
+                        <tr key={index}>
+                          <td>{ambalaj.tip}</td>
+                          <td>{ambalaj.cantitate}</td>
+                          <td>{ambalaj.unitate}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -599,11 +763,7 @@ const Productie = () => {
                 <button
                   onClick={confirmaProductia}
                   className={styles.button}
-                  disabled={
-                    !cantitateProdusa ||
-                    parseFloat(cantitateProdusa) <= 0 ||
-                    !container
-                  }
+                  disabled={!cantitateProdusa || parseFloat(cantitateProdusa) <= 0 || !container}
                   style={{ marginTop: '20px' }}
                 >
                   Confirmă Producția
@@ -612,13 +772,13 @@ const Productie = () => {
                 <button
                   onClick={clearTempState}
                   className={`${styles.button} ${styles.buttonDanger}`}
-                  style={{ marginBottom: '20px' }}
+                  style={{ marginTop: '20px' }}
                 >
                   Resetare Date Temporare
                 </button>
-              </>
+              </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </>
