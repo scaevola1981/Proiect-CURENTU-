@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import "../../LocalStorage/materiale"; // This initializes localStorage with default materials
 import styles from "./materiiPrime.module.css";
 import Header from "../Header/header";
+import { adaugaSauSuplimenteazaMaterial, getMateriiPrime } from '../LocalStorage/materiale';
 
 const MateriiPrime = () => {
   const [materii, setMaterii] = useState([]);
@@ -42,8 +43,6 @@ const MateriiPrime = () => {
     loadMaterials();
   }, []);
 
-  
-
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -51,69 +50,33 @@ const MateriiPrime = () => {
   };
 
   // Add or update material
-  const handleMaterialSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!nouMaterial.denumire || !nouMaterial.cantitate || !nouMaterial.unitate) {
-      alert("Toate câmpurile sunt obligatorii!");
-      return;
-    }
+const handleMaterialSubmit = (e) => {
+  e.preventDefault();
 
-    const denumireLowerCase = nouMaterial.denumire.toLowerCase().trim();
-    const unitateLowerCase = nouMaterial.unitate.toLowerCase().trim();
-    const cantitate = parseFloat(nouMaterial.cantitate);
+  if (!nouMaterial.denumire || !nouMaterial.cantitate || !nouMaterial.unitate) {
+    alert("Toate câmpurile sunt obligatorii!");
+    return;
+  }
 
-    if (isNaN(cantitate) || cantitate <= 0) {
-      alert("Cantitatea trebuie să fie un număr pozitiv!");
-      return;
-    }
+  const cantitate = parseFloat(nouMaterial.cantitate);
+  if (isNaN(cantitate) || cantitate <= 0) {
+    alert("Cantitatea trebuie să fie un număr pozitiv!");
+    return;
+  }
 
-    let updatedMaterials;
-    
-    if (editMode) {
-      // Update existing material
-      updatedMaterials = materii.map(m => 
-        m.id === nouMaterial.id ? { 
-          ...nouMaterial, 
-          cantitate: parseFloat(nouMaterial.cantitate) 
-        } : m
-      );
-    } else {
-      // Add new material
-      const existingMaterial = materii.find(m => 
-        m.denumire.toLowerCase().trim() === denumireLowerCase &&
-        m.unitate.toLowerCase().trim() === unitateLowerCase
-      );
+  // Folosește funcția utilitară pentru adăugare/suplimentare
+  adaugaSauSuplimenteazaMaterial({
+    denumire: nouMaterial.denumire,
+    cantitate: cantitate,
+    unitate: nouMaterial.unitate,
+    // poți adăuga și alte câmpuri dacă ai nevoie (tip, producator, codProdus, lot, subcategorie)
+  });
 
-      if (existingMaterial) {
-        // Merge with existing material
-        updatedMaterials = materii.map(m => 
-          m.id === existingMaterial.id ? { 
-            ...m, 
-            cantitate: m.cantitate + cantitate 
-          } : m
-        );
-      } else {
-        // Create new material
-        const newId = materii.length > 0 ? Math.max(...materii.map(m => m.id)) + 1 : 1;
-        updatedMaterials = [
-          ...materii,
-          {
-            id: newId,
-            denumire: nouMaterial.denumire.trim(),
-            cantitate: cantitate,
-            unitate: nouMaterial.unitate.trim()
-          }
-        ];
-      }
-    }
-
-    // Save to localStorage and state
-    localStorage.setItem("materiiPrime", JSON.stringify(updatedMaterials));
-    setMaterii(updatedMaterials);
-    setNouMaterial({ denumire: "", cantitate: "", unitate: "" });
-    setEditMode(false);
-  };
+  // Actualizează lista din state
+  setMaterii(getMateriiPrime());
+  setNouMaterial({ denumire: "", cantitate: "", unitate: "" });
+  setEditMode(false);
+};
 
   // Delete material
   const deleteMaterial = (id) => {
