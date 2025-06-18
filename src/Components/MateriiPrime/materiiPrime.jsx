@@ -1,10 +1,7 @@
-
- 
 import React, { useEffect, useState } from "react";
-import "../../LocalStorage/materiale"; // This initializes localStorage with default materials
+import { adaugaSauSuplimenteazaMaterial, getMateriiPrime } from "../../LocalStorage/materiale";
 import styles from "./materiiPrime.module.css";
 import Header from "../Header/header";
-import { adaugaSauSuplimenteazaMaterial, getMateriiPrime } from '../LocalStorage/materiale';
 
 const MateriiPrime = () => {
   const [materii, setMaterii] = useState([]);
@@ -12,24 +9,26 @@ const MateriiPrime = () => {
     denumire: "",
     cantitate: "",
     unitate: "",
+    producator: "",
+    codProdus: "",
+    lot: "",
+    tip: "",
+    subcategorie: "",
   });
   const [editMode, setEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
- 
+
   // Load materials from localStorage on component mount
   useEffect(() => {
     const loadMaterials = () => {
       setIsLoading(true);
       try {
-        const storedMaterials = localStorage.getItem("materiiPrime");
-        if (storedMaterials) {
-          const parsedMaterials = JSON.parse(storedMaterials);
-          // Sort materials by ID for consistent display
-          const sortedMaterials = [...parsedMaterials].sort((a, b) => a.id - b.id);
+        const storedMaterials = getMateriiPrime(); // Use utility function
+        if (storedMaterials && Array.isArray(storedMaterials)) {
+          const sortedMaterials = [...storedMaterials].sort((a, b) => a.id - b.id);
           setMaterii(sortedMaterials);
         } else {
-          // If no materials found, initialize with empty array
           setMaterii([]);
         }
       } catch (error) {
@@ -50,40 +49,90 @@ const MateriiPrime = () => {
   };
 
   // Add or update material
-const handleMaterialSubmit = (e) => {
-  e.preventDefault();
+  const handleMaterialSubmit = (e) => {
+    e.preventDefault();
 
-  if (!nouMaterial.denumire || !nouMaterial.cantitate || !nouMaterial.unitate) {
-    alert("Toate câmpurile sunt obligatorii!");
-    return;
-  }
+    // Validate required fields
+    if (!nouMaterial.denumire || !nouMaterial.cantitate || !nouMaterial.unitate) {
+      alert("Denumire, Cantitate și Unitate sunt obligatorii!");
+      return;
+    }
 
-  const cantitate = parseFloat(nouMaterial.cantitate);
-  if (isNaN(cantitate) || cantitate <= 0) {
-    alert("Cantitatea trebuie să fie un număr pozitiv!");
-    return;
-  }
+    const cantitate = parseFloat(nouMaterial.cantitate);
+    if (isNaN(cantitate) || cantitate <= 0) {
+      alert("Cantitatea trebuie să fie un număr pozitiv!");
+      return;
+    }
 
-  // Folosește funcția utilitară pentru adăugare/suplimentare
-  adaugaSauSuplimenteazaMaterial({
-    denumire: nouMaterial.denumire,
-    cantitate: cantitate,
-    unitate: nouMaterial.unitate,
-    // poți adăuga și alte câmpuri dacă ai nevoie (tip, producator, codProdus, lot, subcategorie)
-  });
+    try {
+      // Add or update material using utility function
+      adaugaSauSuplimenteazaMaterial({
+        id: editMode ? nouMaterial.id : undefined, // Include ID for updates
+        denumire: nouMaterial.denumire,
+        cantitate: cantitate,
+        unitate: nouMaterial.unitate,
+        producator: nouMaterial.producator,
+        codProdus: nouMaterial.codProdus,
+        lot: nouMaterial.lot,
+        tip: nouMaterial.tip,
+        subcategorie: nouMaterial.subcategorie,
+      });
 
-  // Actualizează lista din state
-  setMaterii(getMateriiPrime());
-  setNouMaterial({ denumire: "", cantitate: "", unitate: "" });
-  setEditMode(false);
-};
+      // Refresh materials list
+      setMaterii(getMateriiPrime());
+      setNouMaterial({
+        denumire: "",
+        cantitate: "",
+        unitate: "",
+        producator: "",
+        codProdus: "",
+        lot: "",
+        tip: "",
+        subcategorie: "",
+      });
+      setEditMode(false);
+    } catch (error) {
+      console.error("Error saving material:", error);
+      alert("A apărut o eroare la salvarea materialului!");
+    }
+  };
 
   // Delete material
   const deleteMaterial = (id) => {
     if (window.confirm("Sigur doriți să ștergeți acest material?")) {
-      const updatedMaterials = materii.filter(m => m.id !== id);
-      localStorage.setItem("materiiPrime", JSON.stringify(updatedMaterials));
-      setMaterii(updatedMaterials);
+      try {
+        const updatedMaterials = materii.filter((m) => m.id !== id);
+        localStorage.setItem("materiiPrime", JSON.stringify(updatedMaterials));
+        setMaterii(updatedMaterials);
+      } catch (error) {
+        console.error("Error deleting material:", error);
+        alert("A apărut o eroare la ștergerea materialului!");
+      }
+    }
+  };
+
+  // Delete all materials
+  const deleteAllMaterials = () => {
+    if (window.confirm("Sigur doriți să ștergeți TOATE materialele? Această acțiune este ireversibilă!")) {
+      try {
+        localStorage.setItem("materiiPrime", JSON.stringify([]));
+        setMaterii([]);
+        setEditMode(false);
+        setNouMaterial({
+          denumire: "",
+          cantitate: "",
+          unitate: "",
+          producator: "",
+          codProdus: "",
+          lot: "",
+          tip: "",
+          subcategorie: "",
+        });
+        alert("Toate materialele au fost șterse!");
+      } catch (error) {
+        console.error("Error deleting all materials:", error);
+        alert("A apărut o eroare la ștergerea tuturor materialelor!");
+      }
     }
   };
 
@@ -93,21 +142,39 @@ const handleMaterialSubmit = (e) => {
       id: material.id,
       denumire: material.denumire,
       cantitate: material.cantitate.toString(),
-      unitate: material.unitate
+      unitate: material.unitate,
+      producator: material.producator || "",
+      codProdus: material.codProdus || "",
+      lot: material.lot || "",
+      tip: material.tip || "",
+      subcategorie: material.subcategorie || "",
     });
     setEditMode(true);
   };
 
   // Cancel editing
   const cancelEditing = () => {
-    setNouMaterial({ denumire: "", cantitate: "", unitate: "" });
+    setNouMaterial({
+      denumire: "",
+      cantitate: "",
+      unitate: "",
+      producator: "",
+      codProdus: "",
+      lot: "",
+      tip: "",
+      subcategorie: "",
+    });
     setEditMode(false);
   };
 
   // Filter materials based on search term
-  const filteredMaterials = materii.filter(material =>
-    material.denumire.toLowerCase().includes(searchTerm.toLowerCase())
-    
+  const filteredMaterials = materii.filter((material) =>
+    material.denumire.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    material.producator?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    material.codProdus?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    material.lot?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    material.tip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    material.subcategorie?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -119,7 +186,6 @@ const handleMaterialSubmit = (e) => {
         </div>
       </>
     );
-
   }
 
   return (
@@ -128,7 +194,7 @@ const handleMaterialSubmit = (e) => {
       <div className={styles.container}>
         <h1 className={styles.titlu}>Materii Prime Disponibile</h1>
 
-        {/* Search Bar */}
+        {/* Toolbar with Search and Delete All Button */}
         <div className={styles.toolbar}>
           <input
             type="text"
@@ -137,6 +203,13 @@ const handleMaterialSubmit = (e) => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className={styles.searchInput}
           />
+          <button
+            className={styles.buttonDelete}
+            onClick={deleteAllMaterials}
+            title="Șterge toate materialele"
+          >
+            Șterge Toate
+          </button>
         </div>
 
         {/* Add/Edit Form */}
@@ -188,6 +261,51 @@ const handleMaterialSubmit = (e) => {
               <option value="buc" />
               <option value="pachete" />
             </datalist>
+
+            <input
+              type="text"
+              name="producator"
+              placeholder="Producător"
+              value={nouMaterial.producator}
+              onChange={handleInputChange}
+              className={styles.input}
+            />
+
+            <input
+              type="text"
+              name="codProdus"
+              placeholder="Cod produs"
+              value={nouMaterial.codProdus}
+              onChange={handleInputChange}
+              className={styles.input}
+            />
+
+            <input
+              type="text"
+              name="lot"
+              placeholder="Lot"
+              value={nouMaterial.lot}
+              onChange={handleInputChange}
+              className={styles.input}
+            />
+
+            <input
+              type="text"
+              name="tip"
+              placeholder="Tip"
+              value={nouMaterial.tip}
+              onChange={handleInputChange}
+              className={styles.input}
+            />
+
+            <input
+              type="text"
+              name="subcategorie"
+              placeholder="Subcategorie"
+              value={nouMaterial.subcategorie}
+              onChange={handleInputChange}
+              className={styles.input}
+            />
           </div>
 
           <div className={styles.formButtons}>
@@ -196,9 +314,9 @@ const handleMaterialSubmit = (e) => {
                 <button type="submit" className={styles.buttonUpdate}>
                   Actualizează
                 </button>
-                <button 
-                  type="button" 
-                  className={styles.buttonCancel} 
+                <button
+                  type="button"
+                  className={styles.buttonCancel}
                   onClick={cancelEditing}
                 >
                   Anulează
@@ -221,6 +339,11 @@ const handleMaterialSubmit = (e) => {
                 <th className={styles.headerCell}>Denumire</th>
                 <th className={styles.headerCell}>Cantitate</th>
                 <th className={styles.headerCell}>Unitate</th>
+                <th className={styles.headerCell}>Producător</th>
+                <th className={styles.headerCell}>Cod Produs</th>
+                <th className={styles.headerCell}>Lot</th>
+                <th className={styles.headerCell}>Tip</th>
+                <th className={styles.headerCell}>Subcategorie</th>
                 <th className={styles.headerCell}>Acțiuni</th>
               </tr>
             </thead>
@@ -232,6 +355,11 @@ const handleMaterialSubmit = (e) => {
                     <td className={styles.cell}>{material.denumire}</td>
                     <td className={styles.cell}>{material.cantitate}</td>
                     <td className={styles.cell}>{material.unitate}</td>
+                    <td className={styles.cell}>{material.producator || "-"}</td>
+                    <td className={styles.cell}>{material.codProdus || "-"}</td>
+                    <td className={styles.cell}>{material.lot || "-"}</td>
+                    <td className={styles.cell}>{material.tip || "-"}</td>
+                    <td className={styles.cell}>{material.subcategorie || "-"}</td>
                     <td className={styles.cellActions}>
                       <button
                         onClick={() => startEditing(material)}
@@ -250,10 +378,10 @@ const handleMaterialSubmit = (e) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className={styles.noResults}>
-                    {materii.length === 0 ? 
-                      "Nu există materiale în stoc. Adăugați un material nou." : 
-                      "Nu s-au găsit materiale care să corespundă căutării."}
+                  <td colSpan="10" className={styles.noResults}>
+                    {materii.length === 0
+                      ? "Nu există materiale în stoc. Adăugați un material nou."
+                      : "Nu s-au găsit materiale care să corespundă căutării."}
                   </td>
                 </tr>
               )}

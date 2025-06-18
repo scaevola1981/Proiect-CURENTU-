@@ -1,8 +1,13 @@
 import React from 'react'
+import Header from '../Header/header'
 
 const Rebuturi = () => {
-  return (
-    <div>Rebuturi</div>
+  return(
+    <>
+    <Header/>
+       <div>Rebuturi</div>
+    </>
+ 
   )
 }
 
